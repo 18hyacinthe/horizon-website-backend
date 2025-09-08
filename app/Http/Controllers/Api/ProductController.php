@@ -82,36 +82,27 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        // Debug : Log des données reçues
+        \Log::info('Données reçues pour création produit:', $request->all());
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'category' => 'required|in:phones,computers,accessories',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|string|url',
             'is_active' => 'boolean'
         ]);
 
         if ($validator->fails()) {
+            \Log::error('Erreurs de validation:', $validator->errors()->toArray());
             return response()->json([
                 'message' => 'Erreur de validation',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        $data = $request->only(['name', 'description', 'category']);
+        $data = $request->only(['name', 'description', 'category', 'image']);
         $data['is_active'] = $request->boolean('is_active', true);
-
-        // Upload image to Cloudinary if provided
-        if ($request->hasFile('image')) {
-            try {
-                $imageUrl = $this->cloudinaryService->uploadImage($request->file('image'));
-                $data['image'] = $imageUrl;
-            } catch (\Exception $e) {
-                return response()->json([
-                    'message' => 'Erreur lors du téléchargement de l\'image',
-                    'error' => $e->getMessage()
-                ], 500);
-            }
-        }
 
         $product = Product::create($data);
 
@@ -142,7 +133,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'category' => 'required|in:phones,computers,accessories',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|string|url',
             'is_active' => 'boolean'
         ]);
 
@@ -153,27 +144,8 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['name', 'description', 'category']);
+        $data = $request->only(['name', 'description', 'category', 'image']);
         $data['is_active'] = $request->boolean('is_active', $product->is_active);
-
-        // Upload new image to Cloudinary if provided
-        if ($request->hasFile('image')) {
-            try {
-                // Delete old image if it exists
-                if ($product->image) {
-                    $this->cloudinaryService->deleteImage($product->image);
-                }
-
-                // Upload new image
-                $imageUrl = $this->cloudinaryService->uploadImage($request->file('image'));
-                $data['image'] = $imageUrl;
-            } catch (\Exception $e) {
-                return response()->json([
-                    'message' => 'Erreur lors du téléchargement de l\'image',
-                    'error' => $e->getMessage()
-                ], 500);
-            }
-        }
 
         $product->update($data);
 
@@ -189,11 +161,6 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         try {
-            // Delete image from Cloudinary if it exists
-            if ($product->image) {
-                $this->cloudinaryService->deleteImage($product->image);
-            }
-
             $product->delete();
 
             return response()->json([
