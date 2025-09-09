@@ -28,8 +28,11 @@ class AuthController extends Controller
             ]);
         }
 
-        // Create a simple token (you could use Sanctum for production)
-        $token = base64_encode($admin->id . '|' . now()->timestamp . '|' . $admin->email);
+        // Supprimer les anciens tokens
+        $admin->tokens()->delete();
+
+        // Créer un nouveau token Sanctum
+        $token = $admin->createToken('admin-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Connexion réussie',
@@ -47,6 +50,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        $admin = $request->user();
+        
+        if ($admin) {
+            // Supprimer tous les tokens de l'admin
+            $admin->tokens()->delete();
+        }
+
         return response()->json([
             'message' => 'Déconnexion réussie',
         ]);
@@ -57,36 +67,18 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        $token = $request->bearerToken();
+        $admin = $request->user();
 
-        if (!$token) {
+        if (!$admin) {
             return response()->json(['message' => 'Non authentifié'], 401);
         }
 
-        try {
-            $decoded = base64_decode($token);
-            $parts = explode('|', $decoded);
-
-            if (count($parts) !== 3) {
-                return response()->json(['message' => 'Token invalide'], 401);
-            }
-
-            $adminId = $parts[0];
-            $admin = Admin::find($adminId);
-
-            if (!$admin) {
-                return response()->json(['message' => 'Admin non trouvé'], 401);
-            }
-
-            return response()->json([
-                'admin' => [
-                    'id' => $admin->id,
-                    'name' => $admin->name,
-                    'email' => $admin->email,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Token invalide'], 401);
-        }
+        return response()->json([
+            'admin' => [
+                'id' => $admin->id,
+                'name' => $admin->name,
+                'email' => $admin->email,
+            ],
+        ]);
     }
 }

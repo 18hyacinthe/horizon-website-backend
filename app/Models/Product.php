@@ -80,16 +80,16 @@ class Product extends Model
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
         $slug = trim($slug, '-');
-        
+
         // Ensure uniqueness
         $originalSlug = $slug;
         $counter = 1;
-        
+
         while (self::where('slug', $slug)->exists()) {
             $slug = $originalSlug . '-' . $counter;
             $counter++;
         }
-        
+
         return $slug;
     }
 
@@ -99,25 +99,17 @@ class Product extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($product) {
             if (empty($product->slug)) {
                 $product->slug = self::generateSlug($product->name);
             }
         });
-        
+
         static::updating(function ($product) {
             if ($product->isDirty('name') && empty($product->slug)) {
                 $product->slug = self::generateSlug($product->name);
             }
         });
-    }
-
-    /**
-     * Get route key name for model binding
-     */
-    public function getRouteKeyName()
-    {
-        return 'slug';
     }
 }

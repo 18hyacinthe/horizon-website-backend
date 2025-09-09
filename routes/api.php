@@ -23,8 +23,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Routes d'authentification admin
 Route::prefix('admin')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
 
 // Routes publiques pour les produits
@@ -36,7 +36,7 @@ Route::prefix('products')->group(function () {
 });
 
 // Routes d'administration pour les produits (CRUD)
-Route::prefix('admin/products')->group(function () {
+Route::prefix('admin/products')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [ProductController::class, 'adminIndex']); // Liste tous les produits pour l'admin
     Route::post('/', [ProductController::class, 'store']);
     Route::put('/{product}', [ProductController::class, 'update']);
