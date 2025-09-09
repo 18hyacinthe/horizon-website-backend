@@ -19,6 +19,15 @@ class Product extends Model
         'description',
         'image',
         'category',
+        'subcategory',
+        'price',
+        'gallery',
+        'features',
+        'specifications',
+        'tech_sheet_url',
+        'serial_prefix',
+        'slug',
+        'meta_description',
         'is_active',
     ];
 
@@ -29,6 +38,10 @@ class Product extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'price' => 'decimal:2',
+        'gallery' => 'array',
+        'features' => 'array',
+        'specifications' => 'array',
     ];
 
     /**
@@ -58,5 +71,53 @@ class Product extends Model
             'accessories' => 'Accessoires',
             default => $this->category,
         };
+    }
+
+    /**
+     * Generate slug from name
+     */
+    public static function generateSlug($name)
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
+        $slug = trim($slug, '-');
+        
+        // Ensure uniqueness
+        $originalSlug = $slug;
+        $counter = 1;
+        
+        while (self::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+        
+        return $slug;
+    }
+
+    /**
+     * Boot method to auto-generate slug
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($product) {
+            if (empty($product->slug)) {
+                $product->slug = self::generateSlug($product->name);
+            }
+        });
+        
+        static::updating(function ($product) {
+            if ($product->isDirty('name') && empty($product->slug)) {
+                $product->slug = self::generateSlug($product->name);
+            }
+        });
+    }
+
+    /**
+     * Get route key name for model binding
+     */
+    public function getRouteKeyName()
+    {
+        return 'slug';
     }
 }

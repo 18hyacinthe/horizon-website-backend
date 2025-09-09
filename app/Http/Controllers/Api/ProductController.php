@@ -89,7 +89,17 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'category' => 'required|in:phones,computers,accessories',
+            'subcategory' => 'nullable|string|max:255',
+            'price' => 'nullable|numeric|min:0',
             'image' => 'nullable|string|url',
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'string|url',
+            'features' => 'nullable|array',
+            'features.*' => 'string',
+            'specifications' => 'nullable|array',
+            'tech_sheet_url' => 'nullable|string|url',
+            'serial_prefix' => 'nullable|string|max:10',
+            'meta_description' => 'nullable|string|max:300',
             'is_active' => 'boolean'
         ]);
 
@@ -101,7 +111,10 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['name', 'description', 'category', 'image']);
+        $data = $request->only([
+            'name', 'description', 'category', 'subcategory', 'price', 'image',
+            'gallery', 'features', 'specifications', 'tech_sheet_url', 'serial_prefix', 'meta_description'
+        ]);
         $data['is_active'] = $request->boolean('is_active', true);
 
         $product = Product::create($data);
@@ -125,6 +138,22 @@ class ProductController extends Controller
     }
 
     /**
+     * Display the specified resource by slug.
+     */
+    public function showBySlug($slug)
+    {
+        $product = Product::where('slug', $slug)->where('is_active', true)->first();
+
+        if (!$product) {
+            return response()->json(['message' => 'Produit non trouvé'], 404);
+        }
+
+        return response()->json([
+            'data' => new ProductResource($product)
+        ]);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Product $product)
@@ -133,7 +162,17 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'category' => 'required|in:phones,computers,accessories',
+            'subcategory' => 'nullable|string|max:255',
+            'price' => 'nullable|numeric|min:0',
             'image' => 'nullable|string|url',
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'string|url',
+            'features' => 'nullable|array',
+            'features.*' => 'string',
+            'specifications' => 'nullable|array',
+            'tech_sheet_url' => 'nullable|string|url',
+            'serial_prefix' => 'nullable|string|max:10',
+            'meta_description' => 'nullable|string|max:300',
             'is_active' => 'boolean'
         ]);
 
@@ -144,7 +183,10 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['name', 'description', 'category', 'image']);
+        $data = $request->only([
+            'name', 'description', 'category', 'subcategory', 'price', 'image',
+            'gallery', 'features', 'specifications', 'tech_sheet_url', 'serial_prefix', 'meta_description'
+        ]);
         $data['is_active'] = $request->boolean('is_active', $product->is_active);
 
         $product->update($data);

@@ -31,6 +31,7 @@ Route::prefix('admin')->group(function () {
 Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/carousel', [ProductController::class, 'carousel']);
+    Route::get('/slug/{slug}', [ProductController::class, 'showBySlug']);
     Route::get('/{product}', [ProductController::class, 'show']);
 });
 
